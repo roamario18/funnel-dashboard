@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Дашборд воронки продаж</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <h1>Воронка продаж</h1>
+        <p class="muted" id="statusLine">Загрузка…</p>
+      </div>
+      <div class="filters">
+        <label class="funnel">
+          <span>Воронка</span>
+          <select id="categorySelect" aria-label="Воронка продаж">
+            <option value="0">Общая</option>
+          </select>
+        </label>
+        <div class="period" aria-label="Фильтр периода">
+          <button type="button" class="chip" data-period="7">7 дней</button>
+          <button type="button" class="chip is-active" data-period="30">30 дней</button>
+          <button type="button" class="chip" data-period="all">Все</button>
+        </div>
+      </div>
+    </header>
+
+    <p class="banner err" id="errorBanner" hidden></p>
+    <ul class="banner warn" id="warnList" hidden></ul>
+    <p class="banner info" id="loginBanner" hidden>
+      Чтобы увидеть сделки текущего пользователя, <a id="loginLink" href="/auth/login">войдите через Битрикс24</a>.
+    </p>
+
+    <section class="kpis">
+      <article class="card kpi">
+        <span>Сумма открытых</span>
+        <strong id="kpiOpen">—</strong>
+      </article>
+      <article class="card kpi">
+        <span>Выиграно за период</span>
+        <strong id="kpiWon">—</strong>
+      </article>
+      <article class="card kpi">
+        <span>Средний чек</span>
+        <strong id="kpiAvg">—</strong>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Стадии воронки</h2>
+      <p class="empty" id="stagesEmpty">Нет сделок за выбранный период.</p>
+      <table class="table" id="stagesTable" hidden>
+        <thead>
+          <tr>
+            <th>Стадия</th>
+            <th>Сделок</th>
+            <th>Сумма</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Последние сделки</h2>
+      <p class="empty" id="dealsEmpty">Нет сделок за выбранный период.</p>
+      <table class="table" id="dealsTable" hidden>
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Сумма</th>
+            <th>Стадия</th>
+            <th>Ответственный</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

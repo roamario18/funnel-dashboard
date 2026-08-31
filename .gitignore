@@ -1,0 +1,8 @@
+.env
+.env.local
+*.pem
+node_modules/
+dist/
+.local/
+_check_me.py
+_deploy.py
