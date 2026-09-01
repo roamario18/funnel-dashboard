@@ -3,28 +3,32 @@
   "data": {
     "type": "oauth_app",
     "portal": "bs18.bitrix24.ru",
-    "accessMode": "READWRITE",
+    "accessMode": "READONLY",
     "scopes": [
+      "entity",
+      "placement",
       "crm",
-      "user",
-      "placement"
+      "user"
     ],
     "capabilities": {
       "apps": {
         "publish": {
-          "available": true
+          "available": false,
+          "reason": "WRITE_BLOCKED_READONLY_KEY"
         },
         "bindPlacements": {
-          "available": true
+          "available": false,
+          "reason": "WRITE_BLOCKED_READONLY_KEY"
         }
       },
       "servers": {
         "create": {
           "available": false,
-          "reason": "SESSION_REQUIRED"
+          "reason": "WRITE_BLOCKED_READONLY_KEY"
         },
         "deploy": {
-          "available": true
+          "available": false,
+          "reason": "WRITE_BLOCKED_READONLY_KEY"
         }
       }
     }

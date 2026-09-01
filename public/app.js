@@ -31,10 +31,11 @@
       return new Intl.NumberFormat('ru-RU', {
         style: 'currency',
         currency: currency || 'RUB',
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }).format(n);
     } catch {
-      return `${Math.round(n)} ${currency || ''}`.trim();
+      return `${n.toFixed(2)} ${currency || ''}`.trim();
     }
   }
 
