@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "data": {
+    "type": "oauth_app",
+    "portal": "bs18.bitrix24.ru",
+    "accessMode": "READWRITE",
+    "scopes": [
+      "crm",
+      "user",
+      "placement"
+    ],
+    "capabilities": {
+      "apps": {
+        "publish": {
+          "available": true
+        },
+        "bindPlacements": {
+          "available": true
+        }
+      },
+      "servers": {
+        "create": {
+          "available": false,
+          "reason": "SESSION_REQUIRED"
+        },
+        "deploy": {
+          "available": true
+        }
+      }
+    }
+  }
+}

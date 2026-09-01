@@ -39,17 +39,66 @@ function sessionAuth(req) {
   return token.startsWith('Bearer ') ? token : `Bearer ${token}`;
 }
 
+function applySessionCookie(req, res, token) {
+  const secure = publicOrigin(req).startsWith('https://');
+  res.setHeader('Set-Cookie', [
+    cookieHeader('vibe_session', token, {
+      maxAge: 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: secure ? 'None' : 'Lax',
+      secure,
+    }),
+    cookieHeader('oauth_state', '', { maxAge: 0, httpOnly: true }),
+  ]);
+}
+
+async function exchangeCode(code, redirectUri) {
+  const json = await vibeFetch('/v1/oauth/token', {
+    method: 'POST',
+    body: {
+      app_key: apiKey(),
+      code,
+      redirect_uri: redirectUri,
+    },
+  });
+  return json.access_token || json.data?.access_token || '';
+}
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
-app.get('/', (req, res) => {
-  if (req.query.code && !req.query.state) {
+app.get('/', async (req, res) => {
+  const code = req.query.code ? String(req.query.code) : '';
+  const state = req.query.state ? String(req.query.state) : '';
+
+  if (code && state) {
     const next = new URL('/auth/callback', publicOrigin(req));
-    next.searchParams.set('code', String(req.query.code));
-    if (req.query.state) next.searchParams.set('state', String(req.query.state));
+    next.searchParams.set('code', code);
+    next.searchParams.set('state', state);
     return res.redirect(next.toString());
   }
+
+  // Placement / Gateway: одноразовый код без state. redirect_uri = appUrl.
+  if (code && !state) {
+    const origin = publicOrigin(req);
+    const uris = [origin, `${origin}/`];
+    let token = '';
+    for (const redirectUri of uris) {
+      try {
+        token = await exchangeCode(code, redirectUri);
+        if (token) break;
+      } catch {
+        token = '';
+      }
+    }
+    if (token) {
+      applySessionCookie(req, res, token);
+      return res.redirect('/');
+    }
+    // Если код уже погашен, а Gateway передал X-Vibe-Authorization — просто открываем UI.
+  }
+
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -93,16 +142,7 @@ app.get('/auth/callback', async (req, res) => {
     if (!token) {
       return res.redirect('/?auth_error=no_token');
     }
-    const secure = publicOrigin(req).startsWith('https://');
-    res.setHeader('Set-Cookie', [
-      cookieHeader('vibe_session', token, {
-        maxAge: 60 * 60 * 24,
-        httpOnly: true,
-        sameSite: secure ? 'None' : 'Lax',
-        secure,
-      }),
-      cookieHeader('oauth_state', '', { maxAge: 0, httpOnly: true }),
-    ]);
+    applySessionCookie(req, res, token);
     res.redirect('/');
   } catch (err) {
     const code = err.code || 'auth_failed';
