@@ -4,7 +4,7 @@
 
 **Портал:** `https://bs18.bitrix24.ru` → левое меню **«Дашборд воронки продаж»** / **«Воронка продаж»**.  
 **Контейнер (только из меню):** [https://app-b7ba428c3bbc.vibecode.bitrix24.tech](https://app-b7ba428c3bbc.vibecode.bitrix24.tech)  
-**Исходники:** [https://github.com/roamario18/funnel-dashboard](https://github.com/roamario18/funnel-dashboard)
+**Исходники:** [https://github.com/перroamario18/funnel-dashboard](https://github.com/roamario18/funnel-dashboard)
 
 Прямая ссылка Black Hole даёт 401 (`OWNER_ONLY`) — открывать из меню, не по URL `app-…`.
 
@@ -34,8 +34,7 @@
 
 Платформенных `vibe:*` на боевом ключе нет. Режим `READONLY`. Актуальный `GET /v1/me` без секрета — [docs/me.json](docs/me.json).   
 
-
-Ответ по замечаниям — [docs/чек-лист-замечания.md](docs/чек-лист-замечания.md).
+Ответ по замечаниям — [docs/remarks-checklist.md](docs/remarks-checklist.md).
 
 ## Ограничения
 
@@ -45,6 +44,8 @@
 - Сессия `vibe_app_` живёт 24 часа, без автопродления.
 - Пустая выборка — empty-state, не ошибка.
 - Поштучный запрос пользователей — только при сбое сети / 5xx; на 401/403 в таблице остаётся `ID`.
+
+
 
 ## Как проверить
 
