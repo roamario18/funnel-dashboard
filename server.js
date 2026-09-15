@@ -55,6 +55,8 @@ function applySessionCookie(req, res, token) {
 async function exchangeCode(code, redirectUri) {
   const json = await vibeFetch('/v1/oauth/token', {
     method: 'POST',
+    timeoutMs: 8000,
+    maxAttempts: 1,
     body: {
       app_key: apiKey(),
       code,
@@ -69,6 +71,12 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/', async (req, res) => {
+  const incoming = authFromReq(req);
+  if (incoming) {
+    applySessionCookie(req, res, incoming.replace(/^Bearer\s+/i, '').trim());
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
   const code = req.query.code ? String(req.query.code) : '';
   const state = req.query.state ? String(req.query.state) : '';
 
@@ -79,24 +87,17 @@ app.get('/', async (req, res) => {
     return res.redirect(next.toString());
   }
 
-  // Placement / Gateway: одноразовый код без state. redirect_uri = appUrl.
+  // Placement: одноразовый code без state. Нельзя долго ретраить — шлюз Black Hole оборвёт HTML.
   if (code && !state) {
-    const origin = publicOrigin(req);
-    const uris = [origin, `${origin}/`];
-    let token = '';
-    for (const redirectUri of uris) {
-      try {
-        token = await exchangeCode(code, redirectUri);
-        if (token) break;
-      } catch {
-        token = '';
+    try {
+      const token = await exchangeCode(code, publicOrigin(req));
+      if (token) {
+        applySessionCookie(req, res, token);
+        return res.redirect('/');
       }
+    } catch {
+      // код мог быть уже погашен; отдаём UI, сессию поставит повторный вход
     }
-    if (token) {
-      applySessionCookie(req, res, token);
-      return res.redirect('/');
-    }
-    // Если код уже погашен, а Gateway передал X-Vibe-Authorization — просто открываем UI.
   }
 
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

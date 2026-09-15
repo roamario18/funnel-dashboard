@@ -5,10 +5,11 @@
     "portal": "bs18.bitrix24.ru",
     "accessMode": "READONLY",
     "scopes": [
-      "entity",
-      "placement",
       "crm",
-      "user"
+      "user",
+      "placement",
+      "vibe:ai",
+      "vibe:search"
     ],
     "capabilities": {
       "apps": {
