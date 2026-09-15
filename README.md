@@ -31,7 +31,7 @@
 
 `vibe:infra` на ключе нет. Платформа сама оставляет на `vibe_app_` скоупы `vibe:ai` и `vibe:search` (модели и веб-поиск); в карточке они не снимаются. Дашборд их не вызывает; в `READONLY` запись в эти разделы закрыта. Актуальный срез без секрета — [docs/me.json](docs/me.json).
 
-Ответ по замечаниям от **11.09.2026** — [docs/remarks-11-09-2026.md](docs/remarks-11-09-2026.md). Письмо от 15.09.2026 — [docs/remarks-checklist.md](docs/remarks-checklist.md).
+Ответ по замечаниям (**11.09.2026** сверху, затем **01.09.2026**) — [docs/remarks-checklist.md](docs/remarks-checklist.md).
 
 ## Ограничения
 
