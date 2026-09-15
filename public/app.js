@@ -1,5 +1,6 @@
 (function () {
   const statusLine = document.getElementById('statusLine');
+  const loadBanner = document.getElementById('loadBanner');
   const errorBanner = document.getElementById('errorBanner');
   const warnList = document.getElementById('warnList');
   const loginBanner = document.getElementById('loginBanner');
@@ -16,6 +17,7 @@
   let period = '30';
   let categoryId = '0';
   let portal = '';
+  let dashSeq = 0;
 
   function escapeHtml(value) {
     return String(value)
@@ -40,8 +42,48 @@
   }
 
   function showError(message) {
-    errorBanner.hidden = !message;
-    errorBanner.textContent = message || '';
+    const text = String(message || '');
+    const friendly = /gateway did not get a response/i.test(text)
+      ? 'Шлюз не дождался ответа приложения. Подождите и обновите страницу, не переключайте период повторно.'
+      : text;
+    if (!errorBanner) return;
+    errorBanner.hidden = !friendly;
+    errorBanner.textContent = friendly;
+  }
+
+  async function readBody(res) {
+    const text = await res.text();
+    let json = {};
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch {
+      json = {};
+    }
+    return { json, text };
+  }
+
+  function setLoading(on) {
+    document.body.classList.toggle('is-loading', on);
+    if (loadBanner) loadBanner.hidden = !on;
+    chips.forEach((btn) => {
+      btn.disabled = on;
+    });
+    if (categorySelect) categorySelect.disabled = on;
+    if (on) {
+      if (kpiOpen) kpiOpen.textContent = '…';
+      if (kpiWon) kpiWon.textContent = '…';
+      if (kpiAvg) kpiAvg.textContent = '…';
+      if (stagesEmpty) {
+        stagesEmpty.hidden = false;
+        stagesEmpty.textContent = 'Считаем суммы по стадиям…';
+      }
+      if (stagesTable) stagesTable.hidden = true;
+      if (dealsTable && dealsEmpty && !(dealsTable.tBodies[0] && dealsTable.tBodies[0].rows.length)) {
+        dealsEmpty.hidden = false;
+        dealsEmpty.textContent = 'Загрузка сделок…';
+        dealsTable.hidden = true;
+      }
+    }
   }
 
   function showWarnings(items) {
@@ -83,27 +125,28 @@
 
   async function loadMe() {
     const res = await fetch('/api/me', { credentials: 'same-origin' });
-    const json = await res.json().catch(() => ({}));
+    const { json } = await readBody(res);
     if (!res.ok || !json.success) {
       statusLine.textContent = 'Ключ не проверен';
-      showError(json.error?.message || 'Не удалось прочитать ключ');
       return;
     }
     const d = json.data || {};
     portal = d.portal || '';
     statusLine.textContent = [d.portal, d.type, d.accessMode].filter(Boolean).join(' · ');
-    showWarnings(d.warnings);
   }
 
   async function loadDashboard() {
+    const seq = ++dashSeq;
+    setLoading(true);
     showError('');
-    loginBanner.hidden = true;
-    statusLine.textContent = (statusLine.textContent || '') + '';
+    try {
     const res = await fetch(
       `/api/dashboard?period=${encodeURIComponent(period)}&categoryId=${encodeURIComponent(categoryId)}`,
       { credentials: 'same-origin' },
     );
-    const json = await res.json().catch(() => ({}));
+    const { json, text } = await readBody(res);
+    if (seq !== dashSeq) return;
+    loginBanner.hidden = true;
     if (res.status === 401 || json.error?.code === 'TOKEN_MISSING' || json.error?.code === 'SESSION_REQUIRED') {
       loginBanner.hidden = false;
       fillTable(stagesTable, stagesEmpty, '', false);
@@ -117,9 +160,10 @@
       return;
     }
     if (!res.ok || !json.success) {
-      showError(json.error?.message || 'Не удалось загрузить воронку');
+      showError(json.error?.message || text || 'Не удалось загрузить воронку');
       return;
     }
+    showError('');
     const d = json.data || {};
     fillCategories(d.categories, d.categoryId);
     showWarnings(d.warnings);
@@ -157,20 +201,25 @@
     if (!(d.recentDeals || []).length) {
       dealsEmpty.textContent = 'Нет сделок за выбранный период.';
     }
+    } finally {
+      if (seq === dashSeq) setLoading(false);
+    }
   }
 
   chips.forEach((btn) => {
     btn.addEventListener('click', () => {
       period = btn.dataset.period;
       setActiveChip();
-      loadDashboard().catch(() => showError('Сервер приложения недоступен'));
+      loadDashboard().catch((err) => showError(err && err.message ? err.message : 'Не удалось обновить воронку'));
     });
   });
 
-  categorySelect.addEventListener('change', () => {
-    categoryId = categorySelect.value;
-    loadDashboard().catch(() => showError('Сервер приложения недоступен'));
-  });
+  if (categorySelect) {
+    categorySelect.addEventListener('change', () => {
+      categoryId = categorySelect.value;
+      loadDashboard().catch((err) => showError(err && err.message ? err.message : 'Не удалось обновить воронку'));
+    });
+  }
 
   const params = new URLSearchParams(window.location.search);
   const authError = params.get('auth_error');
@@ -179,10 +228,10 @@
   }
 
   setActiveChip();
-  loadMe()
-    .then(() => loadDashboard())
-    .catch(() => {
-      statusLine.textContent = 'Нет связи с сервером';
-      showError('Сервер приложения недоступен');
-    });
+  loadMe().catch(() => {
+    if (statusLine) statusLine.textContent = 'Ключ не проверен';
+  });
+  loadDashboard().catch((err) => {
+    showError(err && err.message ? err.message : 'Не удалось загрузить воронку');
+  });
 })();

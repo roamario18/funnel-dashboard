@@ -63,7 +63,14 @@ h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
   color: var(--text);
   cursor: pointer;
 }
-.chip:disabled { opacity: 0.55; cursor: default; }
+.chip:disabled,
+.funnel select:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+body.is-loading .kpi strong {
+  color: var(--muted);
+}
 .chip.is-active {
   border-color: var(--accent);
   background: #e9f9fe;
