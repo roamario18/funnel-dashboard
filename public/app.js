@@ -160,7 +160,15 @@
       return;
     }
     if (!res.ok || !json.success) {
-      showError(json.error?.message || text || 'Не удалось загрузить воронку');
+      const failText = json.error?.message || text || 'Не удалось загрузить воронку';
+      showError(failText);
+      fillTable(stagesTable, stagesEmpty, '', false);
+      fillTable(dealsTable, dealsEmpty, '', false);
+      stagesEmpty.textContent = failText;
+      dealsEmpty.textContent = failText;
+      kpiOpen.textContent = '—';
+      kpiWon.textContent = '—';
+      kpiAvg.textContent = '—';
       return;
     }
     showError('');
@@ -171,15 +179,18 @@
     kpiWon.textContent = String(d.kpis?.wonCount ?? 0);
     kpiAvg.textContent = money(d.kpis?.avgCheck);
 
+    const hasStageCounts = (d.stages || []).some((s) => s.count > 0);
     const stageRows = (d.stages || []).map((s) => `
       <tr>
         <td>${escapeHtml(s.name || s.stageId)}</td>
         <td>${escapeHtml(s.count)}</td>
         <td>${escapeHtml(money(s.amount))}</td>
       </tr>`).join('');
-    fillTable(stagesTable, stagesEmpty, stageRows, (d.stages || []).some((s) => s.count > 0));
-    if (!(d.stages || []).some((s) => s.count > 0)) {
-      stagesEmpty.textContent = 'Нет сделок за выбранный период.';
+    fillTable(stagesTable, stagesEmpty, stageRows, hasStageCounts);
+    if (!hasStageCounts) {
+      stagesEmpty.textContent = d.aggregateFailed
+        ? 'Не удалось полностью посчитать стадии.'
+        : 'Нет сделок за выбранный период.';
     }
 
     const dealRows = (d.recentDeals || []).map((deal) => {
